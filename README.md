@@ -23,14 +23,39 @@ An automated backend utility designed to validate, clean, and standardize user c
 3.  **Phone Sanitation:** Strips non-numeric characters from the phone string, then evaluates the remaining digits against standard length requirements.
 4.  **Batch Update:** Determines a final `is_valid` boolean based on the combined validation results and executes a batch `UPDATE` query to overwrite the dirty data with the sanitized values.
 
+```mermaid
+graph TD
+    %% Initialization and Ingestion
+    A[Start: Initialize Verifier] --> B[(SQLite Database)]
+    B -->|setup_dummy_database| C[Ingest Raw Contact Records]
+    C -->|process_database| D{Iterate Through Records}
+    
+    %% Validation Pipeline
+    D -->|Next Record| E[validate_email]
+    E -->|Regex Match| F[validate_and_clean_phone]
+    F -->|Strip whitespace/dashes<br>Regex Match| G{Are BOTH valid?}
+    
+    %% Logic and Flagging
+    G -->|Yes| H[Set is_valid = 1]
+    G -->|No| I[Set is_valid = 0]
+    
+    %% Batch Updating
+    H --> J[Queue updates: Cleaned Phone & Flag]
+    I --> J
+    J --> D
+    
+    %% Finalization
+    D -->|No more records| K[Batch UPDATE to SQLite Database]
+    K --> L[End: Verification Complete]
+ ```
+
 ## Installation & Usage
 
 1. **Clone the repository:**
    ```bash
    git clone [https://github.com/YourUsername/customer-data-verifier.git](https://github.com/YourUsername/customer-data-verifier.git)
    cd customer-data-verifier
-   ```
-
+  
 2. **Install testing dependencies:**
    ```bash
    pip install pytest
